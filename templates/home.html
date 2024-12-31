@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .text-area {
+            width: 100%;
+            height: 200px;
+            resize: none;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .btn-primary, .btn-secondary {
+            width: 100%;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="text-center">Share Your Content</h2>
+    <p class="text-center">The content you share will be accessible for the next 2 hours. Anyone with the code will be able to view it.</p>
+
+    <form id="content-form">
+        <div class="form-group">
+            <label for="code">Enter a Code (Optional):</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="code" name="code" placeholder="Enter a code">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-secondary" id="viewButton">View</button>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="content">Your Content:</label>
+            <textarea id="content" class="text-area" name="content" placeholder="Enter your content here..."></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" id="shareButton">Share</button>
+    </form>
+
+    <div class="alert alert-info mt-4" id="shareInfo" style="display: none;">
+        <strong>Content Shared!</strong> You can now share the generated code with others. 
+        <div class="d-flex justify-content-between">
+            <span id="generatedCode"></span>
+            <button class="btn btn-secondary" id="copyButton">Copy Code</button>
+        </div>
+    </div>
+
+    <!-- Logoff Button -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Log Off</a>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    // Simulate generating a code
+    function generateCode() {
+        return Math.random().toString(36).substr(2, 9).toUpperCase();
+    }
+
+    // Handle share button click
+    $('#shareButton').click(function() {
+        var content = $('#content').val();
+        var code = $('#code').val() || generateCode();
+
+        if (content) {
+            // Send data to the server
+            fetch('/share', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: code,
+                    content: content
+                })
+            }).then(response => {
+                if (response.ok) {
+                    // Show the share info with the generated code
+                    $('#generatedCode').text(code);
+                    $('#shareInfo').show();
+                } else {
+                    alert('Failed to share content. Please try again.');
+                }
+            });
+        } else {
+            alert('Please enter content to share.');
+        }
+    });
+
+    // Handle view button click
+    $('#viewButton').click(function() {
+        var code = $('#code').val();
+
+        if (code) {
+            // Fetch data from the server
+            fetch(`/view/${code}`).then(response => response.json()).then(data => {
+                if (data.content) {
+                    $('#content').val(data.content);
+                } else {
+                    alert('Content not found or expired.');
+                }
+            });
+        } else {
+            alert('Please enter a code to view content.');
+        }
+    });
+
+$('#copyButton').click(function() {
+    var codeText = $('#generatedCode').text();
+    if (codeText) {
+        // Create a temporary textarea element to copy text
+        var tempInput = document.createElement('textarea');
+        tempInput.value = codeText;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        alert('Code copied to clipboard!');
+    } else {
+        alert('No code to copy. Please share content first.');
+    }
+});
+
+</script>
+
+</body>
+</html>
+
